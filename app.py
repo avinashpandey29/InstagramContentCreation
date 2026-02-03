@@ -1,5 +1,6 @@
 import streamlit as st
 from openai import OpenAI
+import base64
 
 # ---------------- PAGE CONFIG ---------------- #
 st.set_page_config(
@@ -8,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------- LOAD API KEY ---------------- #
+# ---------------- API KEY (SECRETS ONLY) ---------------- #
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("❌ OpenAI API key not configured.")
     st.stop()
@@ -17,7 +18,7 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # ---------------- HEADER ---------------- #
 st.title("📸 AI Instagram Content Machine")
-st.caption("Create content, images, and reel animations — copy & paste ready.")
+st.caption("Create captions, images, slides & reel animations — copy-paste ready.")
 
 st.markdown("---")
 
@@ -62,7 +63,7 @@ if generate:
         st.warning("⚠️ Please enter a niche.")
         st.stop()
 
-    # ---------- TEXT CONTENT ---------- #
+    # ================= TEXT CONTENT ================= #
     with st.spinner("🧠 Generating captions & hashtags..."):
 
         text_prompt = f"""
@@ -91,7 +92,7 @@ For EACH post include:
 
     st.markdown("## ✨ Captions & Hashtags")
     st.text_area(
-        "Copy–paste content",
+        "Copy–paste captions",
         text_content,
         height=350
     )
@@ -106,7 +107,7 @@ For EACH post include:
 
     st.markdown("---")
 
-    # ---------- IMAGE GENERATION ---------- #
+    # ================= IMAGE GENERATION ================= #
     with st.spinner("🖼️ Generating Instagram image..."):
 
         image_prompt = f"""
@@ -124,18 +125,23 @@ No text on image
             size="1024x1024"
         )
 
-        image_url = image_response.data[0].url
+        image_base64 = image_response.data[0].b64_json
+        image_bytes = base64.b64decode(image_base64)
 
     st.markdown("## 🖼️ AI Image (Post / Reel Cover)")
-    st.image(image_url, use_container_width=True)
-    st.markdown(
-        f"[⬇️ Download Image]({image_url})",
-        unsafe_allow_html=True
+    st.image(image_bytes, use_container_width=True)
+
+    st.download_button(
+        "⬇️ Download Image",
+        data=image_bytes,
+        file_name="instagram_image.png",
+        mime="image/png",
+        use_container_width=True
     )
 
     st.markdown("---")
 
-    # ---------- SLIDE CONTENT ---------- #
+    # ================= SLIDE CONTENT ================= #
     with st.spinner("🧩 Creating carousel slide text..."):
 
         slide_prompt = f"""
@@ -163,16 +169,16 @@ Each slide must be under 12 words.
 
         slide_content = slide_response.choices[0].message.content
 
-    st.markdown("## 🧩 Carousel Slide Text (Canva Ready)")
+    st.markdown("## 🧩 Carousel Slides (Canva Ready)")
     st.text_area(
-        "Copy each slide into Canva",
+        "Copy slide text",
         slide_content,
         height=250
     )
 
     st.markdown("---")
 
-    # ---------- ANIMATION SCRIPT ---------- #
+    # ================= ANIMATION SCRIPT ================= #
     with st.spinner("🎬 Creating slow reel animation steps..."):
 
         animation_prompt = f"""
@@ -201,7 +207,7 @@ Animation type (fade, slide up, zoom)
 
     st.markdown("## 🎬 Slow Animation Script (CapCut / Canva)")
     st.text_area(
-        "Copy–paste animation steps",
+        "Copy animation steps",
         animation_content,
         height=300
     )
