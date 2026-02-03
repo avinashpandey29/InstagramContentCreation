@@ -8,26 +8,16 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------- BASIC UI (ALWAYS RENDER) ---------------- #
+# ---------------- LOAD API KEY FROM SECRETS ---------------- #
+if "OPENAI_API_KEY" not in st.secrets:
+    st.error("❌ OpenAI API key is not configured. Please contact the app owner.")
+    st.stop()
+
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+# ---------------- HEADER ---------------- #
 st.title("📸 AI Instagram Content Machine")
 st.caption("Create viral Instagram content in seconds — no thinking, no stress.")
-
-# ---------------- SIDEBAR ---------------- #
-st.sidebar.header("🔐 OpenAI API Key")
-
-user_api_key = st.sidebar.text_input(
-    "Enter your OpenAI API key",
-    type="password",
-    help="Used only for this session. Not stored."
-)
-
-# ---------------- API KEY RESOLUTION ---------------- #
-api_key = None
-
-if user_api_key:
-    api_key = user_api_key
-elif "OPENAI_API_KEY" in st.secrets:
-    api_key = st.secrets["OPENAI_API_KEY"]
 
 # ---------------- INPUT SECTION ---------------- #
 st.markdown("### ✍️ Content Details")
@@ -57,25 +47,18 @@ language = st.radio(
 
 st.markdown("---")
 
-# ---------------- VALIDATION MESSAGE ---------------- #
-if not api_key:
-    st.warning("⚠️ Please add your OpenAI API key in the sidebar or Streamlit Secrets.")
-
 # ---------------- GENERATE BUTTON ---------------- #
 generate = st.button(
     "🚀 Generate Instagram Content",
-    use_container_width=True,
-    disabled=not api_key
+    use_container_width=True
 )
 
 # ---------------- GENERATION ---------------- #
 if generate:
 
     if not niche.strip():
-        st.warning("Please enter a niche.")
+        st.warning("⚠️ Please enter a niche.")
         st.stop()
-
-    client = OpenAI(api_key=api_key)
 
     with st.spinner("🧠 AI is crafting your content..."):
 
@@ -93,6 +76,8 @@ For EACH post include:
 - Hook (1 powerful line)
 - Caption (2–3 short lines)
 - Hashtags (5–8 relevant hashtags)
+
+Make it engaging, scroll-stopping, and practical.
 """
 
         response = client.chat.completions.create(
@@ -103,6 +88,7 @@ For EACH post include:
 
         content = response.choices[0].message.content
 
+    # ---------------- OUTPUT ---------------- #
     st.markdown("### ✨ Generated Instagram Content")
 
     st.text_area(
@@ -121,4 +107,4 @@ For EACH post include:
 
 # ---------------- FOOTER ---------------- #
 st.markdown("---")
-st.caption("Built with ❤️ using Streamlit & OpenAI")
+st.caption("Built with ❤️ using AI")
