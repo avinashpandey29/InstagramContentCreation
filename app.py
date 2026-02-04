@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------- API KEY (SECRETS ONLY) ---------------- #
+# ---------------- API KEY ---------------- #
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("❌ OpenAI API key not configured.")
     st.stop()
@@ -18,68 +18,83 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # ---------------- HEADER ---------------- #
 st.title("📸 AI Instagram Content Machine")
-st.caption("Create captions, images, slides & reel animations — copy-paste ready.")
+st.caption("100% copy-paste Instagram content packs — images, captions, hashtags & animations.")
 
 st.markdown("---")
 
-# ---------------- INPUTS ---------------- #
-st.markdown("### ✍️ Content Settings")
+# ---------------- USER OPTIONS ---------------- #
+st.markdown("## ⚙️ Content Options")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     niche = st.text_input("Niche", placeholder="fitness, finance, travel")
 
 with col2:
-    tone = st.selectbox(
-        "Tone",
-        ["Professional", "Funny", "Motivational", "Casual"]
-    )
+    tone = st.selectbox("Tone", ["Professional", "Funny", "Motivational", "Casual"])
 
 with col3:
-    goal = st.selectbox(
-        "Goal",
-        ["Grow followers", "Sell product", "Educate audience"]
-    )
+    goal = st.selectbox("Goal", ["Grow followers", "Sell product", "Educate audience"])
 
-language = st.radio(
-    "Language",
-    ["English", "Hinglish", "Hindi"],
-    horizontal=True
-)
+with col4:
+    language = st.selectbox("Language", ["English", "Hinglish", "Hindi"])
+
+st.markdown("### 🔧 Advanced Controls")
+
+c1, c2, c3, c4 = st.columns(4)
+
+with c1:
+    post_count = st.selectbox("Number of Posts", [1, 3, 5])
+
+with c2:
+    content_type = st.selectbox("Content Type", ["Single Post", "Carousel", "Reel"])
+
+with c3:
+    image_style = st.selectbox("Image Style", ["Minimal", "Neon", "Dark", "Aesthetic"])
+
+with c4:
+    hashtag_style = st.selectbox("Hashtag Style", ["Viral", "Niche-specific", "Mixed"])
+
+cta_style = st.selectbox("CTA Style", ["Soft", "Direct", "No CTA"])
 
 st.markdown("---")
 
-# ---------------- GENERATE BUTTON ---------------- #
-generate = st.button(
-    "🚀 Generate Instagram Content",
-    use_container_width=True
-)
+# ---------------- GENERATE ---------------- #
+generate = st.button("🚀 Generate Full Content Pack", use_container_width=True)
 
-# ---------------- MAIN GENERATION ---------------- #
 if generate:
 
     if not niche.strip():
-        st.warning("⚠️ Please enter a niche.")
+        st.warning("Please enter a niche.")
         st.stop()
 
-    # ================= TEXT CONTENT ================= #
-    with st.spinner("🧠 Generating captions & hashtags..."):
+    # ================= TEXT PACK ================= #
+    with st.spinner("🧠 Generating captions, hashtags & structure..."):
 
         text_prompt = f"""
-You are an expert Instagram content strategist.
-
-Create 5 Instagram post ideas.
+Create {post_count} Instagram {content_type.lower()} content packs.
 
 Niche: {niche}
 Tone: {tone}
 Goal: {goal}
 Language: {language}
+CTA Style: {cta_style}
+Hashtag Style: {hashtag_style}
 
-For EACH post include:
-- Hook (1 strong line)
-- Caption (2–3 short lines)
-- Hashtags (5–8)
+For EACH post provide this EXACT structure:
+
+POST X
+CAPTION:
+(2–3 lines)
+
+HASHTAGS:
+(8–12 hashtags)
+
+CAROUSEL SLIDES:
+(if applicable, 5 short slides)
+
+ANIMATION SCRIPT:
+(scene-by-scene, slow & smooth)
 """
 
         text_response = client.chat.completions.create(
@@ -90,33 +105,30 @@ For EACH post include:
 
         text_content = text_response.choices[0].message.content
 
-    st.markdown("## ✨ Captions & Hashtags")
-    st.text_area(
-        "Copy–paste captions",
-        text_content,
-        height=350
-    )
+    st.markdown("## 📝 Copy-Paste Content Pack")
+    st.text_area("Full Content (Organized)", text_content, height=500)
 
     st.download_button(
-        "📥 Download Captions",
+        "📥 Download Text Pack",
         data=text_content,
-        file_name="instagram_captions.txt",
+        file_name="instagram_content_pack.txt",
         mime="text/plain",
         use_container_width=True
     )
 
     st.markdown("---")
 
-    # ================= IMAGE GENERATION ================= #
-    with st.spinner("🖼️ Generating Instagram image..."):
+    # ================= IMAGE ================= #
+    with st.spinner("🖼️ Generating image..."):
 
         image_prompt = f"""
-Create a high-quality Instagram image.
+Create an Instagram image.
 Niche: {niche}
 Tone: {tone}
-Style: modern, aesthetic, clean
-Mood: scroll-stopping
+Style: {image_style}
+Content type: {content_type}
 No text on image
+High quality, scroll-stopping
 """
 
         image_response = client.images.generate(
@@ -125,10 +137,9 @@ No text on image
             size="1024x1024"
         )
 
-        image_base64 = image_response.data[0].b64_json
-        image_bytes = base64.b64decode(image_base64)
+        image_bytes = base64.b64decode(image_response.data[0].b64_json)
 
-    st.markdown("## 🖼️ AI Image (Post / Reel Cover)")
+    st.markdown("## 🖼️ Copy-Paste Image")
     st.image(image_bytes, use_container_width=True)
 
     st.download_button(
@@ -139,79 +150,6 @@ No text on image
         use_container_width=True
     )
 
-    st.markdown("---")
-
-    # ================= SLIDE CONTENT ================= #
-    with st.spinner("🧩 Creating carousel slide text..."):
-
-        slide_prompt = f"""
-Create Instagram carousel slide content.
-
-Niche: {niche}
-Tone: {tone}
-Goal: {goal}
-
-Create 5 slides:
-Slide 1: Strong hook
-Slide 2: Problem
-Slide 3: Insight
-Slide 4: Solution
-Slide 5: CTA
-
-Each slide must be under 12 words.
-"""
-
-        slide_response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": slide_prompt}],
-            temperature=0.7
-        )
-
-        slide_content = slide_response.choices[0].message.content
-
-    st.markdown("## 🧩 Carousel Slides (Canva Ready)")
-    st.text_area(
-        "Copy slide text",
-        slide_content,
-        height=250
-    )
-
-    st.markdown("---")
-
-    # ================= ANIMATION SCRIPT ================= #
-    with st.spinner("🎬 Creating slow reel animation steps..."):
-
-        animation_prompt = f"""
-Create a slow Instagram Reel animation plan.
-
-Niche: {niche}
-Tone: {tone}
-
-Duration: 10–12 seconds
-Style: smooth, aesthetic, calm
-
-Provide:
-Scene number
-Time range
-Text on screen
-Animation type (fade, slide up, zoom)
-"""
-
-        animation_response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": animation_prompt}],
-            temperature=0.7
-        )
-
-        animation_content = animation_response.choices[0].message.content
-
-    st.markdown("## 🎬 Slow Animation Script (CapCut / Canva)")
-    st.text_area(
-        "Copy animation steps",
-        animation_content,
-        height=300
-    )
-
 # ---------------- FOOTER ---------------- #
 st.markdown("---")
-st.caption("Built with ❤️ for creators | Streamlit + OpenAI")
+st.caption("Built for creators • Fully copy-paste • Streamlit + OpenAI")
