@@ -4,58 +4,47 @@ import base64
 
 # ================= PAGE CONFIG ================= #
 st.set_page_config(
-    page_title="AI Social Content Engine",
+    page_title="AI Social Storytelling Engine",
     page_icon="✨",
     layout="wide"
 )
 
 # ================= API KEY ================= #
 if "OPENAI_API_KEY" not in st.secrets:
-    st.error("OpenAI API key not configured.")
+    st.error("❌ OpenAI API key not configured in Streamlit Secrets.")
     st.stop()
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# ================= GLOBAL STYLE ================= #
+# ================= STYLE ================= #
 st.markdown("""
 <style>
-.app-title {
-    font-size: 34px;
+.title {
+    font-size: 40px;
     font-weight: 800;
 }
 .subtitle {
     color: #666;
-    margin-bottom: 20px;
+    font-size: 18px;
+    margin-bottom: 25px;
 }
 .card {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 14px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
-    margin-bottom: 20px;
-}
-.section-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 10px;
+    background: white;
+    padding: 18px;
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+    margin-bottom: 18px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ================= SIDEBAR (LIKE REACT NAV) ================= #
-st.sidebar.markdown("## ✨ AI Social Content Engine")
-st.sidebar.caption("Creator Mode")
+# ================= SIDEBAR NAV ================= #
+st.sidebar.markdown("## ✨ Social Content Studio")
+st.sidebar.caption("Emotion + Platform Creator Engine")
 
 platform = st.sidebar.selectbox(
     "Choose Platform",
-    [
-        "Instagram",
-        "LinkedIn",
-        "X (Twitter)",
-        "YouTube Shorts",
-        "TikTok",
-        "Facebook"
-    ]
+    ["Instagram", "LinkedIn", "X (Twitter)", "YouTube Shorts", "TikTok", "Facebook"]
 )
 
 content_type = st.sidebar.selectbox(
@@ -72,14 +61,27 @@ content_type = st.sidebar.selectbox(
 
 st.sidebar.markdown("---")
 
+emotion = st.sidebar.selectbox(
+    "Emotion Style",
+    [
+        "Motivational 💪",
+        "Romantic ❤️",
+        "Calm 🌿",
+        "Nostalgic 🌙",
+        "Sad-but-Hopeful 😌",
+        "Self-love ✨",
+        "Dreamy 🌅"
+    ]
+)
+
 tone = st.sidebar.selectbox(
-    "Tone",
-    ["Professional", "Casual", "Motivational", "Funny", "Educational"]
+    "Writing Tone",
+    ["Human & Relatable", "Poetic", "Minimal", "Funny", "Professional"]
 )
 
 goal = st.sidebar.selectbox(
     "Goal",
-    ["Grow audience", "Engagement", "Sell product", "Build brand"]
+    ["Get followers", "More saves", "More shares", "Sell product", "Build personal brand"]
 )
 
 language = st.sidebar.selectbox(
@@ -88,75 +90,100 @@ language = st.sidebar.selectbox(
 )
 
 image_style = st.sidebar.selectbox(
-    "Image Style",
-    ["Minimal", "Aesthetic", "Dark", "Neon"]
+    "Image Mood Style",
+    ["Cinematic", "Aesthetic", "Minimal", "Dark", "Soft & Warm"]
 )
 
-# ================= MAIN AREA ================= #
-st.markdown('<div class="app-title">🚀 Creator Content Studio</div>', unsafe_allow_html=True)
+st.sidebar.markdown("---")
+st.sidebar.caption("Built for creators who want emotional viral content.")
+
+# ================= MAIN UI ================= #
+st.markdown('<div class="title">🚀 AI Social Storytelling Engine</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="subtitle">Generate platform-specific content packs — copy, paste, post.</div>',
+    '<div class="subtitle">Generate emotionally powerful content + images people connect with.</div>',
     unsafe_allow_html=True
 )
 
 # ================= INPUT CARD ================= #
 st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<div class="section-title">Content Idea</div>', unsafe_allow_html=True)
-
-niche = st.text_input(
-    "Niche / Topic",
-    placeholder="fitness, AI tools, personal branding, startup life"
+topic = st.text_input(
+    "Enter your topic / feeling / niche",
+    placeholder="Example: feeling lonely, gym motivation, startup struggle, travel memories..."
 )
-
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ================= GENERATE ================= #
-generate = st.button("✨ Generate Content Pack", use_container_width=True)
+# ================= GENERATE BUTTON ================= #
+generate = st.button("✨ Generate Viral Content Pack", use_container_width=True)
 
+# ================= GENERATION ================= #
 if generate:
 
-    if not niche.strip():
-        st.warning("Please enter a niche or topic.")
+    if not topic.strip():
+        st.warning("⚠️ Please enter a topic or feeling.")
         st.stop()
 
-    with st.spinner("Creating content..."):
+    with st.spinner("🧠 Creating emotionally viral content..."):
 
-        # -------- TEXT PROMPT (PLATFORM AWARE) -------- #
+        # -------- TEXT PROMPT (EMOTION + PLATFORM) -------- #
         text_prompt = f"""
-Create content for {platform}.
+You are a viral social media storyteller.
 
+Platform: {platform}
 Content type: {content_type}
-Niche: {niche}
+
+Emotion style: {emotion}
 Tone: {tone}
 Goal: {goal}
 Language: {language}
 
-Return a CLEAN, COPY-PASTE READY format.
+Topic/Feeling: {topic}
 
-Include:
-- Hook
-- Main content
-- CTA (if applicable)
-- Hashtags or tags (platform-appropriate)
+Write like a real human.
+Make people FEEL something.
+Avoid generic marketing.
+
+Return EXACTLY in this structure:
+
+HOOK:
+(one emotional scroll-stopper line)
+
+CAPTION:
+(3–5 short relatable lines)
+
+HASHTAGS/TAGS:
+(8–12 soft + trending hashtags)
+
+CALL TO ACTION:
+(short, natural, not salesy)
+
+BONUS:
+(1 extra line people will save/share)
 """
 
         text_response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": text_prompt}],
-            temperature=0.8
+            temperature=0.9
         )
 
         text_content = text_response.choices[0].message.content
 
-        # -------- IMAGE (ONLY FOR VISUAL PLATFORMS) -------- #
+        # -------- IMAGE GENERATION (ONLY VISUAL PLATFORMS) -------- #
         image_bytes = None
         if platform in ["Instagram", "TikTok", "Facebook"]:
 
             image_prompt = f"""
-Create a high-quality image for {platform}.
-Topic: {niche}
-Style: {image_style}
-No text on image
+Create a cinematic emotional social media image.
+
+Emotion: {emotion}
+Topic: {topic}
+
+Mood style: {image_style}
+Make it realistic, human, warm, scroll-stopping.
+Like a viral Instagram aesthetic photo.
+
+No text.
+High quality.
 """
 
             image_response = client.images.generate(
@@ -170,36 +197,42 @@ No text on image
             )
 
     # ================= OUTPUT ================= #
-    st.markdown("## 📦 Generated Content Pack")
+    st.markdown("## 📦 Your Viral Content Pack")
 
-    tabs = ["📝 Text"]
+    tabs = ["📝 Copy-Paste Text"]
     if image_bytes:
-        tabs.append("🖼️ Image")
+        tabs.append("🖼️ Emotional Image")
 
     tab_objects = st.tabs(tabs)
 
+    # -------- TEXT TAB -------- #
     with tab_objects[0]:
         st.text_area(
-            "Copy text",
+            "Ready to copy & paste",
             text_content,
             height=420
         )
+
         st.download_button(
-            "Download Text",
+            "📥 Download Text Pack",
             text_content,
-            file_name=f"{platform.lower()}_content.txt"
+            file_name=f"{platform.lower()}_viral_pack.txt",
+            use_container_width=True
         )
 
+    # -------- IMAGE TAB -------- #
     if image_bytes:
         with tab_objects[1]:
             st.image(image_bytes, use_container_width=True)
+
             st.download_button(
-                "Download Image",
+                "⬇️ Download Image",
                 image_bytes,
-                file_name=f"{platform.lower()}_image.png",
-                mime="image/png"
+                file_name=f"{platform.lower()}_emotional_image.png",
+                mime="image/png",
+                use_container_width=True
             )
 
 # ================= FOOTER ================= #
 st.markdown("---")
-st.caption("Creator-mode • Multi-platform • React-style UX • Built with Streamlit + OpenAI")
+st.caption("✨ Emotion-first content engine • Multi-platform • Creator SaaS Ready")
