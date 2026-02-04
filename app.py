@@ -9,147 +9,135 @@ st.set_page_config(
     layout="wide"
 )
 
+# ---------------- SIMPLE CSS (SAFE) ---------------- #
+st.markdown("""
+<style>
+.hero {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+.subhero {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 30px;
+}
+.card {
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+}
+.generate-btn button {
+    font-size: 18px;
+    height: 3em;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ---------------- API KEY ---------------- #
 if "OPENAI_API_KEY" not in st.secrets:
-    st.error("❌ OpenAI API key not configured.")
+    st.error("OpenAI API key not configured.")
     st.stop()
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# ---------------- HEADER ---------------- #
-st.title("📸 AI Instagram Content Machine")
-st.caption("100% copy-paste Instagram content packs — images, captions, hashtags & animations.")
+# ---------------- HERO ---------------- #
+st.markdown('<div class="hero">📸 AI Instagram Content Machine</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="subhero">Create captions, images, slides & reels — 100% copy-paste ready.</div>',
+    unsafe_allow_html=True
+)
 
-st.markdown("---")
+# ---------------- INPUT CARD ---------------- #
+st.markdown('<div class="card">', unsafe_allow_html=True)
+st.markdown("### 🧠 Content Setup")
 
-# ---------------- USER OPTIONS ---------------- #
-st.markdown("## ⚙️ Content Options")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
+c1, c2, c3 = st.columns(3)
+with c1:
     niche = st.text_input("Niche", placeholder="fitness, finance, travel")
-
-with col2:
+with c2:
     tone = st.selectbox("Tone", ["Professional", "Funny", "Motivational", "Casual"])
-
-with col3:
+with c3:
     goal = st.selectbox("Goal", ["Grow followers", "Sell product", "Educate audience"])
 
-with col4:
-    language = st.selectbox("Language", ["English", "Hinglish", "Hindi"])
+language = st.radio("Language", ["English", "Hinglish", "Hindi"], horizontal=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown("### 🔧 Advanced Controls")
+# ---------------- ADVANCED OPTIONS ---------------- #
+with st.expander("⚙️ Advanced Options"):
+    a1, a2, a3 = st.columns(3)
+    with a1:
+        post_count = st.selectbox("Posts", [1, 3, 5])
+    with a2:
+        content_type = st.selectbox("Content Type", ["Post", "Carousel", "Reel"])
+    with a3:
+        image_style = st.selectbox("Image Style", ["Minimal", "Neon", "Dark", "Aesthetic"])
 
-c1, c2, c3, c4 = st.columns(4)
+    hashtag_style = st.selectbox("Hashtag Style", ["Viral", "Niche", "Mixed"])
+    cta_style = st.selectbox("CTA Style", ["Soft", "Direct", "None"])
 
-with c1:
-    post_count = st.selectbox("Number of Posts", [1, 3, 5])
+# ---------------- GENERATE BUTTON ---------------- #
+st.markdown('<div class="generate-btn">', unsafe_allow_html=True)
+generate = st.button("🚀 Generate Content Pack", use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
-with c2:
-    content_type = st.selectbox("Content Type", ["Single Post", "Carousel", "Reel"])
-
-with c3:
-    image_style = st.selectbox("Image Style", ["Minimal", "Neon", "Dark", "Aesthetic"])
-
-with c4:
-    hashtag_style = st.selectbox("Hashtag Style", ["Viral", "Niche-specific", "Mixed"])
-
-cta_style = st.selectbox("CTA Style", ["Soft", "Direct", "No CTA"])
-
-st.markdown("---")
-
-# ---------------- GENERATE ---------------- #
-generate = st.button("🚀 Generate Full Content Pack", use_container_width=True)
-
+# ---------------- GENERATION ---------------- #
 if generate:
 
     if not niche.strip():
         st.warning("Please enter a niche.")
         st.stop()
 
-    # ================= TEXT PACK ================= #
-    with st.spinner("🧠 Generating captions, hashtags & structure..."):
+    with st.spinner("✨ Creating your Instagram content..."):
 
-        text_prompt = f"""
+        prompt = f"""
 Create {post_count} Instagram {content_type.lower()} content packs.
 
 Niche: {niche}
 Tone: {tone}
 Goal: {goal}
 Language: {language}
-CTA Style: {cta_style}
 Hashtag Style: {hashtag_style}
+CTA Style: {cta_style}
 
-For EACH post provide this EXACT structure:
-
-POST X
+For EACH post include:
 CAPTION:
-(2–3 lines)
-
 HASHTAGS:
-(8–12 hashtags)
-
-CAROUSEL SLIDES:
-(if applicable, 5 short slides)
-
+CAROUSEL SLIDES (if applicable):
 ANIMATION SCRIPT:
-(scene-by-scene, slow & smooth)
 """
 
         text_response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[{"role": "user", "content": text_prompt}],
+            messages=[{"role": "user", "content": prompt}],
             temperature=0.8
         )
 
         text_content = text_response.choices[0].message.content
 
-    st.markdown("## 📝 Copy-Paste Content Pack")
-    st.text_area("Full Content (Organized)", text_content, height=500)
-
-    st.download_button(
-        "📥 Download Text Pack",
-        data=text_content,
-        file_name="instagram_content_pack.txt",
-        mime="text/plain",
-        use_container_width=True
-    )
-
-    st.markdown("---")
-
-    # ================= IMAGE ================= #
-    with st.spinner("🖼️ Generating image..."):
-
-        image_prompt = f"""
-Create an Instagram image.
-Niche: {niche}
-Tone: {tone}
-Style: {image_style}
-Content type: {content_type}
-No text on image
-High quality, scroll-stopping
-"""
-
         image_response = client.images.generate(
             model="gpt-image-1",
-            prompt=image_prompt,
+            prompt=f"Instagram image for {niche}, {image_style} style, no text",
             size="1024x1024"
         )
 
         image_bytes = base64.b64decode(image_response.data[0].b64_json)
 
-    st.markdown("## 🖼️ Copy-Paste Image")
-    st.image(image_bytes, use_container_width=True)
+    # ---------------- OUTPUT TABS ---------------- #
+    tab1, tab2, tab3 = st.tabs(["📝 Text", "🖼️ Image", "🎬 Animation"])
 
-    st.download_button(
-        "⬇️ Download Image",
-        data=image_bytes,
-        file_name="instagram_image.png",
-        mime="image/png",
-        use_container_width=True
-    )
+    with tab1:
+        st.text_area("Copy text content", text_content, height=450)
+        st.download_button("Download Text", text_content, "content.txt")
+
+    with tab2:
+        st.image(image_bytes, use_container_width=True)
+        st.download_button("Download Image", image_bytes, "image.png")
+
+    with tab3:
+        st.markdown("Animation steps are included in the text section above.")
 
 # ---------------- FOOTER ---------------- #
 st.markdown("---")
-st.caption("Built for creators • Fully copy-paste • Streamlit + OpenAI")
+st.caption("Built for creators • Clean UI • Copy-paste workflow")
