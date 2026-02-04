@@ -2,184 +2,204 @@ import streamlit as st
 from openai import OpenAI
 import base64
 
-# ================== CONFIG ================== #
+# ================= PAGE CONFIG ================= #
 st.set_page_config(
-    page_title="AI Instagram Content Machine",
-    page_icon="📸",
+    page_title="AI Social Content Engine",
+    page_icon="✨",
     layout="wide"
 )
 
-# ================== API KEY ================== #
+# ================= API KEY ================= #
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("OpenAI API key not configured.")
     st.stop()
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# ================== STYLE ================== #
+# ================= GLOBAL STYLE ================= #
 st.markdown("""
 <style>
-.hero-title {
-    font-size: 48px;
+.app-title {
+    font-size: 34px;
     font-weight: 800;
-    margin-bottom: 10px;
 }
-.hero-subtitle {
-    font-size: 20px;
+.subtitle {
     color: #666;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
 }
-.center-btn button {
-    font-size: 20px;
-    height: 3.2em;
-}
-.section {
-    margin-top: 50px;
-}
-.metric {
-    background: #f8f9fa;
+.card {
+    background: #ffffff;
     padding: 20px;
     border-radius: 14px;
-    text-align: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
 }
-.metric h3 {
-    margin-bottom: 5px;
-}
-.footer {
-    margin-top: 60px;
-    color: #888;
-    text-align: center;
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ================== HERO ================== #
-st.markdown('<div class="hero-title">📸 AI Instagram Content Machine</div>', unsafe_allow_html=True)
+# ================= SIDEBAR (LIKE REACT NAV) ================= #
+st.sidebar.markdown("## ✨ AI Social Content Engine")
+st.sidebar.caption("Creator Mode")
+
+platform = st.sidebar.selectbox(
+    "Choose Platform",
+    [
+        "Instagram",
+        "LinkedIn",
+        "X (Twitter)",
+        "YouTube Shorts",
+        "TikTok",
+        "Facebook"
+    ]
+)
+
+content_type = st.sidebar.selectbox(
+    "Content Type",
+    {
+        "Instagram": ["Post", "Reel", "Carousel"],
+        "LinkedIn": ["Post", "Carousel"],
+        "X (Twitter)": ["Thread"],
+        "YouTube Shorts": ["Short Script"],
+        "TikTok": ["Hook + Caption"],
+        "Facebook": ["Post"]
+    }[platform]
+)
+
+st.sidebar.markdown("---")
+
+tone = st.sidebar.selectbox(
+    "Tone",
+    ["Professional", "Casual", "Motivational", "Funny", "Educational"]
+)
+
+goal = st.sidebar.selectbox(
+    "Goal",
+    ["Grow audience", "Engagement", "Sell product", "Build brand"]
+)
+
+language = st.sidebar.selectbox(
+    "Language",
+    ["English", "Hinglish", "Hindi"]
+)
+
+image_style = st.sidebar.selectbox(
+    "Image Style",
+    ["Minimal", "Aesthetic", "Dark", "Neon"]
+)
+
+# ================= MAIN AREA ================= #
+st.markdown('<div class="app-title">🚀 Creator Content Studio</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="hero-subtitle">Create ready-to-post Instagram content in under 60 seconds.</div>',
+    '<div class="subtitle">Generate platform-specific content packs — copy, paste, post.</div>',
     unsafe_allow_html=True
 )
 
-# ================== WHO IT IS FOR ================== #
-st.markdown("### Built for")
-c1, c2, c3, c4 = st.columns(4)
+# ================= INPUT CARD ================= #
+st.markdown('<div class="card">', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Content Idea</div>', unsafe_allow_html=True)
 
-with c1:
-    st.markdown('<div class="metric"><h3>Creators</h3><p>Grow faster</p></div>', unsafe_allow_html=True)
-with c2:
-    st.markdown('<div class="metric"><h3>Businesses</h3><p>Sell more</p></div>', unsafe_allow_html=True)
-with c3:
-    st.markdown('<div class="metric"><h3>Agencies</h3><p>Scale content</p></div>', unsafe_allow_html=True)
-with c4:
-    st.markdown('<div class="metric"><h3>Solopreneurs</h3><p>Save time</p></div>', unsafe_allow_html=True)
-
-st.markdown("---")
-
-# ================== DEMO SETUP (FIXED INPUTS) ================== #
-st.markdown("### Live Demo (Investor View)")
-st.write("This demo shows what a user gets with **one click**.")
-
-DEMO_NICHE = "Fitness"
-DEMO_TONE = "Motivational"
-DEMO_GOAL = "Grow followers"
-DEMO_LANGUAGE = "English"
-
-st.info(
-    f"**Niche:** {DEMO_NICHE}  |  "
-    f"**Tone:** {DEMO_TONE}  |  "
-    f"**Goal:** {DEMO_GOAL}"
+niche = st.text_input(
+    "Niche / Topic",
+    placeholder="fitness, AI tools, personal branding, startup life"
 )
 
-# ================== CTA ================== #
-st.markdown('<div class="center-btn">', unsafe_allow_html=True)
-generate = st.button("🚀 Generate Demo Content Pack", use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ================== GENERATION ================== #
+# ================= GENERATE ================= #
+generate = st.button("✨ Generate Content Pack", use_container_width=True)
+
 if generate:
 
-    with st.spinner("Creating content…"):
+    if not niche.strip():
+        st.warning("Please enter a niche or topic.")
+        st.stop()
 
-        # -------- TEXT -------- #
+    with st.spinner("Creating content..."):
+
+        # -------- TEXT PROMPT (PLATFORM AWARE) -------- #
         text_prompt = f"""
-You are an Instagram growth expert.
+Create content for {platform}.
 
-Create ONE Instagram post.
+Content type: {content_type}
+Niche: {niche}
+Tone: {tone}
+Goal: {goal}
+Language: {language}
 
-Niche: {DEMO_NICHE}
-Tone: {DEMO_TONE}
-Goal: {DEMO_GOAL}
-Language: {DEMO_LANGUAGE}
+Return a CLEAN, COPY-PASTE READY format.
 
-Return EXACTLY this format:
-
-CAPTION:
-(2–3 short lines)
-
-HASHTAGS:
-(8–10 hashtags)
-
-REEL PLAN:
-Scene 1 (0–3s):
-Scene 2 (3–7s):
-Scene 3 (7–12s):
+Include:
+- Hook
+- Main content
+- CTA (if applicable)
+- Hashtags or tags (platform-appropriate)
 """
 
         text_response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": text_prompt}],
-            temperature=0.7
+            temperature=0.8
         )
 
         text_content = text_response.choices[0].message.content
 
-        # -------- IMAGE -------- #
-        image_prompt = f"""
-Create a high-quality Instagram image.
-Niche: {DEMO_NICHE}
-Style: modern, aesthetic, scroll-stopping
+        # -------- IMAGE (ONLY FOR VISUAL PLATFORMS) -------- #
+        image_bytes = None
+        if platform in ["Instagram", "TikTok", "Facebook"]:
+
+            image_prompt = f"""
+Create a high-quality image for {platform}.
+Topic: {niche}
+Style: {image_style}
 No text on image
 """
 
-        image_response = client.images.generate(
-            model="gpt-image-1",
-            prompt=image_prompt,
-            size="1024x1024"
-        )
+            image_response = client.images.generate(
+                model="gpt-image-1",
+                prompt=image_prompt,
+                size="1024x1024"
+            )
 
-        image_bytes = base64.b64decode(image_response.data[0].b64_json)
+            image_bytes = base64.b64decode(
+                image_response.data[0].b64_json
+            )
 
-    # ================== OUTPUT ================== #
-    st.markdown("## Demo Output")
+    # ================= OUTPUT ================= #
+    st.markdown("## 📦 Generated Content Pack")
 
-    tab1, tab2 = st.tabs(["📝 Content", "🖼️ Image"])
+    tabs = ["📝 Text"]
+    if image_bytes:
+        tabs.append("🖼️ Image")
 
-    with tab1:
+    tab_objects = st.tabs(tabs)
+
+    with tab_objects[0]:
         st.text_area(
-            "Ready-to-copy text",
+            "Copy text",
             text_content,
-            height=350
+            height=420
         )
-        st.caption("This is exactly what a creator pastes into Instagram.")
+        st.download_button(
+            "Download Text",
+            text_content,
+            file_name=f"{platform.lower()}_content.txt"
+        )
 
-    with tab2:
-        st.image(image_bytes, use_container_width=True)
-        st.caption("AI-generated post image.")
+    if image_bytes:
+        with tab_objects[1]:
+            st.image(image_bytes, use_container_width=True)
+            st.download_button(
+                "Download Image",
+                image_bytes,
+                file_name=f"{platform.lower()}_image.png",
+                mime="image/png"
+            )
 
-# ================== BUSINESS SECTION ================== #
+# ================= FOOTER ================= #
 st.markdown("---")
-st.markdown("### Business Model")
-
-b1, b2, b3 = st.columns(3)
-with b1:
-    st.markdown('<div class="metric"><h3>₹499/month</h3><p>Creator Plan</p></div>', unsafe_allow_html=True)
-with b2:
-    st.markdown('<div class="metric"><h3>Agency Plans</h3><p>Bulk content</p></div>', unsafe_allow_html=True)
-with b3:
-    st.markdown('<div class="metric"><h3>API / White-label</h3><p>Scalable</p></div>', unsafe_allow_html=True)
-
-# ================== FOOTER ================== #
-st.markdown(
-    '<div class="footer">Live MVP • Deployed • Scalable • Investor-ready</div>',
-    unsafe_allow_html=True
-)
+st.caption("Creator-mode • Multi-platform • React-style UX • Built with Streamlit + OpenAI")
